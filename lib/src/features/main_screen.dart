@@ -8,34 +8,47 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  @override
-  void initState() {
-    super.initState();
-    // TODO: initiate controllers
-  }
+  Future<String>? _resultFuture;
+  final TextEditingController controller = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Center(
           child: Column(
             children: [
-              const TextField(
-                decoration: InputDecoration(
+              TextField(
+                controller: controller,
+                decoration: const InputDecoration(
                     border: OutlineInputBorder(), labelText: "Postleitzahl"),
               ),
               const SizedBox(height: 32),
               OutlinedButton(
                 onPressed: () {
-                  // TODO: implementiere Suche
+                  setState(() {
+                    _resultFuture = getCityFromZip(controller.text);
+                  });
                 },
                 child: const Text("Suche"),
               ),
               const SizedBox(height: 32),
-              Text("Ergebnis: Noch keine PLZ gesucht",
-                  style: Theme.of(context).textTheme.labelLarge),
+              FutureBuilder(
+                future: _resultFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  } else if (snapshot.connectionState == ConnectionState.done) {
+                    return Text("Ergebnis: ${snapshot.data ?? ''}");
+                  } else if (snapshot.hasError) {
+                    return const Text("Ein Fehler ist aufgetreten.");
+                  } else {
+                    return const Text("Ergebnis: Noch keine PLZ gesucht");
+                  }
+                },
+              ),
             ],
           ),
         ),
@@ -45,7 +58,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void dispose() {
-    // TODO: dispose controllers
+    controller.dispose();
     super.dispose();
   }
 
